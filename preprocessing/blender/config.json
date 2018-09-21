@@ -1,0 +1,11 @@
+{
+  "width" : 224,
+  "height" : 224,
+  "zoom_min" : 0.3,
+  "zoom_max" : 0.6,
+  "rot_min" : 0,
+  "rot_max" : 3.141593,
+  "pos_min" : -0.2,
+  "pos_max" : 0.2
+
+}
