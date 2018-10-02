@@ -60,15 +60,17 @@ def render_brick(brick_file_path, background_file_path, number_of_images, render
         if ext.lower() in valid_ext:
             images.append(os.path.join(background_file_path, f))
 
+    intevalls = cfg['rotation_intervals']
     for i in range(0, number_of_images):
         # brick settings
-        brick_scale_factor = round(random.uniform(cfg['zoom_min'], cfg['zoom_max']), 1)
-        brick_rotX = round(random.uniform(cfg['rot_min'], cfg['rot_max']), 1)
-        brick_rotY = round(random.uniform(cfg['rot_min'], cfg['rot_max']), 1)
-        brick_rotZ = round(random.uniform(cfg['rot_min'], cfg['rot_max']), 1)
-        brick_posX = round(random.uniform(cfg['pos_min'], cfg['pos_max']), 1)
-        brick_posY = round(random.uniform(cfg['pos_min'], cfg['pos_min']), 1)
-        brick_posZ = round(random.uniform(cfg['pos_min'], cfg['pos_min']), 1)
+        brick_scale_factor = random.uniform(cfg['zoom_min'], cfg['zoom_max'])
+        brick_rotX = random.choice([random.uniform(intevalls['1_low'], intevalls['1_high']), random.uniform(intevalls['2_low'], intevalls['2_high']), random.uniform(intevalls['3_low'], intevalls['3_high']), random.uniform(intevalls['4_low'], intevalls['4_high'])])
+        brick_rotY = random.choice([random.uniform(intevalls['1_low'], intevalls['1_high']), random.uniform(intevalls['2_low'], intevalls['2_high']), random.uniform(intevalls['3_low'], intevalls['3_high']), random.uniform(intevalls['4_low'], intevalls['4_high'])])
+        brick_rotZ = random.choice([random.uniform(intevalls['1_low'], intevalls['1_high']), random.uniform(intevalls['2_low'], intevalls['2_high']), random.uniform(intevalls['3_low'], intevalls['3_high']), random.uniform(intevalls['4_low'], intevalls['4_high'])])
+        brick_posX = random.gauss(cfg['pos_mean'], cfg['pos_sigma'])
+        brick_posZ = random.gauss(cfg['pos_mean'], cfg['pos_sigma'])
+        brick_posY = 0.0 # due to scaling
+        
         brick.scale = (brick_scale_factor, brick_scale_factor, brick_scale_factor)
         brick.location = (brick_posX, brick_posY, brick_posZ)
         brick.rotation_euler = (brick_rotX, brick_rotY, brick_rotZ)
@@ -76,7 +78,6 @@ def render_brick(brick_file_path, background_file_path, number_of_images, render
         print("scale factor: {}".format(brick_scale_factor))
         print("position (x,y,z): {}, {}, {}".format(brick_posX, brick_posY, brick_posZ))
         print("rotation (x,y,z): {}, {}, {}".format(brick_rotX, brick_rotY, brick_rotZ))
-
 
         # select random background image
         bg_image = random.choice(images)

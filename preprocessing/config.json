@@ -3,9 +3,16 @@
   "height" : 224,
   "zoom_min" : 0.3,
   "zoom_max" : 0.6,
-  "rot_min" : 0,
-  "rot_max" : 3.141593,
-  "pos_min" : -0.2,
-  "pos_max" : 0.2
-
+  "pos_mean" : 0.0,
+  "pos_sigma" : 0.1,
+  "rotation_intervals": {
+    "1_low": 0.31416,
+    "1_high" : 1.25664,
+    "2_low": 1.88496,
+    "2_high" : 2.82743,
+    "3_low": 3.45575,
+    "3_high" : 4.39823,
+    "4_low": 5.02655,
+    "4_high" : 5.96903
+  }
 }

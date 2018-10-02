@@ -2,10 +2,10 @@
 import os
 import sys
 
-PATH = "res/parts/"  # directory holding the .dat files
+PATH = "res/parts_50/"  # directory holding the .dat files
 PATH_BG_IMAGES = "res/bg_noise/" # directory holding the background images
 PATH_OUT = "../dataset/" # output directory
-IMAGES_PER_BRICK = 10
+IMAGES_PER_BRICK = 50
 
 # read all 3d files
 files = []
@@ -30,7 +30,7 @@ for i, file in enumerate(files):
                "-n=" + str(IMAGES_PER_BRICK) + " "
                "-s='" + path_out + "'"
                )
-
+    print(command)
     # run blender python script to render images      
     os.system(command)
     
