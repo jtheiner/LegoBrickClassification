@@ -11,13 +11,14 @@ To generate images from a single 3d model we use the Blender script `render_bric
 
 ### Transfer Learning
 For first tests, we use Transfer Learning with the aim to retrain existing network architectures like VGG19 trained on [ImageNet][3]. This allows a model creation with significantly reduced training data and time.
-We simply cut the last layer(s) and retrain with our classes. `train_model.py -d='image dataset directory'` builds the train and test set from the generated images and retrains the VGG19. Retrained with 45 partly similar classes and selected 100 instances per class, the accuracy  is around 80%, but has the capability for improvement.
+We simply cut the last layer(s) and retrain with our classes. `train_model.py -d='image dataset directory'` builds the train and test set from the generated images and retrains the VGG19. Selected 45 partly similar classes and retrained on 100 instances per class, the accuracy is around 80%, but has the capability for improvement.
 
 
 ### Todo
 - [x] Dataset Generation: Find optimal parameters in `config.json` and use random brick colors
-- [ ] (Re-)train different CNN architectures like VGG-16 and test performance for different settings (number of classes, images per class, training parameters). 
+- [ ] (Re-)train different CNN architectures like VGG-19 and test performance for different settings (number of classes, images per class, training parameters). 
 - [ ] Optimize Transfer Learning approach
+- [ ] Train from scratch
 
 
 [1]: https://jacquesmattheij.com/sorting-two-metric-tons-of-lego/
