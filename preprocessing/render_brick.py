@@ -4,7 +4,11 @@ from mathutils import Euler
 import os
 import random
 from math import pi
+import struct
 
+def hex2rgb(hex):
+    int_tuple = struct.unpack('BBB', bytes.fromhex(hex))
+    return tuple([val/255 for val in int_tuple]) 
 
 def render_brick(brick_file_path, background_file_path, number_of_images, render_folder, cfg):
 
@@ -53,12 +57,13 @@ def render_brick(brick_file_path, background_file_path, number_of_images, render
 
 
     # list of possible background images
-    images = []
-    valid_ext = [".jpg", ".png"]
-    for f in os.listdir(background_file_path):
-        ext = os.path.splitext(f)[1]
-        if ext.lower() in valid_ext:
-            images.append(os.path.join(background_file_path, f))
+    if background_file_path != None:
+        images = []
+        valid_ext = [".jpg", ".png"]
+        for f in os.listdir(background_file_path):
+            ext = os.path.splitext(f)[1]
+            if ext.lower() in valid_ext:
+                images.append(os.path.join(background_file_path, f))
 
     intevalls = cfg['rotation_intervals']
     for i in range(0, number_of_images):
@@ -75,20 +80,26 @@ def render_brick(brick_file_path, background_file_path, number_of_images, render
         brick.location = (brick_posX, brick_posY, brick_posZ)
         brick.rotation_euler = (brick_rotX, brick_rotY, brick_rotZ)
 
+         # set color
+        color = hex2rgb(random.choice(cfg["color"]))
+        print(color)
+        brick.active_material.diffuse_color = color
+
         print("scale factor: {}".format(brick_scale_factor))
         print("position (x,y,z): {}, {}, {}".format(brick_posX, brick_posY, brick_posZ))
         print("rotation (x,y,z): {}, {}, {}".format(brick_rotX, brick_rotY, brick_rotZ))
 
-        # select random background image
-        bg_image = random.choice(images)
-        image = bpy.data.images.load(bg_image)
+        if background_file_path != None:
+            # select random background image
+            bg_image = random.choice(images)
+            image = bpy.data.images.load(bg_image)
 
-        # set background image
-        tex = bpy.data.textures.new(bg_image, 'IMAGE')
-        tex.image = image
-        slot = world.texture_slots.add()
-        slot.texture = tex
-        slot.use_map_horizon = True
+            # set background image
+            tex = bpy.data.textures.new(bg_image, 'IMAGE')
+            tex.image = image
+            slot = world.texture_slots.add()
+            slot.texture = tex
+            slot.use_map_horizon = True
 
         # render image
         rnd.filepath = os.path.join(render_folder, str(i) + '.jpg')
@@ -126,12 +137,12 @@ if __name__ == '__main__':
 
     # create arguments
     parser.add_argument(
-        "-i", "--input_files_path", dest="input", type=str, required=True,
+        "-i", "--input_file_path", dest="input", type=str, required=True,
         help="Input folder for 3d models"
     )
 
     parser.add_argument(
-        "-b", "--background_files_path", dest="background", type=str, required=True,
+        "-b", "--background_files_path", dest="background", type=str, required=False,
         help="Input folder for background images"
     )
 
