@@ -4,3 +4,5 @@ res/
 dataset
 results/
 .vscode
+__pycache__/
+dataset_c45_n100/

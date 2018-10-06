@@ -5,45 +5,18 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from matplotlib import pyplot as plt
 
+import vizualization
+
 from keras import Model, Input
 from keras.layers import Flatten, Dense
+from keras.models import load_model
 
 from keras.preprocessing.image import load_img, img_to_array
+
 from keras.applications.vgg16 import preprocess_input
 from keras.utils import np_utils
 from keras.optimizers import SGD
 from keras.callbacks import Callback
-
-def plot_training_history_accuracy(hist):
-    """
-    Plots the training history of a keras model using matplotlib and saves as image to training_process_acc.png.
-
-    Args:
-        hist: The Keras history from model.fit()
-
-    Returns:
-        None: Simple writes result to file
-    """
-    plt.clf()
-    plt.plot(history.history['acc'])
-    plt.plot(history.history['val_acc'])
-    plt.title('model accuracy during training')
-    plt.ylabel('accuracy')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'validation'], loc='upper left')
-    plt.savefig(os.path.join("results/","training_process_acc.png"))
-
-def plot_training_history_loss(hist):
-    plt.clf()
-    plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
-    plt.title('model loss during training')
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'validation'], loc='upper left')
-    plt.savefig(os.path.join("results/","training_process_loss.png"))
-
-
 
 def build_train_test_set(dataset_path, test_set=0.2):
     """
@@ -59,7 +32,8 @@ def build_train_test_set(dataset_path, test_set=0.2):
             x_test: ndarray test set with shape (instances test , 224, 224, 3)
             y_train: ndarray labels from 1 to num_classes for training with shape
             y_test ndarray labels from 1 to num_classes for test
-            num_classes: total number of unique classes   
+            num_classes: total number of unique classes  
+            classes_dict: dictionary (label -> index)
     """
 
     classes_dict = {}
@@ -90,7 +64,9 @@ def build_train_test_set(dataset_path, test_set=0.2):
     for file_name in file_name_list:
         print(file_name)
         #image = load_img(file_name, color_mode='grayscale' ,target_size=(224, 224))
+
         image = load_img(file_name, target_size=(224, 224))
+
         image = img_to_array(image)
         xtotal.append(image)
         splitted = file_name.split("/")
@@ -105,74 +81,100 @@ def build_train_test_set(dataset_path, test_set=0.2):
 
     print("size of all train images: {} ".format(x_train.shape))
     print("size of all train labels: {} ".format(y_train.shape))
-    return x_train, x_test, y_train, y_test, num_classes
-
-
-def get_custom_VGG16(num_classes):
-    # fine tune a VGG16
-    from keras.applications.vgg16 import VGG16
-    vgg16 = VGG16(weights='imagenet', include_top=True)
-    #vgg16.summary()
-
-    # customize last layers
-    x = Dense(256, activation='relu', name='fc_1')(vgg16.layers[-4].output)
-    x = Dense(64, activation='relu', name='fc_2')(x)
-    predictions = Dense(num_classes, activation='softmax', name='pred')(x)
-
-    #print("custom model architecture")
-    #print(vgg16.input.shape)
-    model = Model(inputs=[vgg16.input], outputs=[predictions])
-    #model.summary()
-    return model
+    return x_train, x_test, y_train, y_test, num_classes, classes_dict
 
 def get_custom_VGG19(num_classes):
     # fine tune a VGG19
     from keras.applications.vgg19 import VGG19
     vgg19 = VGG19(weights='imagenet', include_top=True)
     # customize last layers
-    x = Dense(256, activation='sigmoid', name='fc_1')(vgg19.layers[-4].output)
-    x = Dense(64, activation='sigmoid', name='fc_2')(x)
+    x = Dense(512, activation='sigmoid', name='fc_1')(vgg19.layers[-4].output)
+    x = Dense(256, activation='sigmoid', name='fc_2')(x)
     predictions = Dense(num_classes, activation='softmax', name='pred')(x)
     model = Model(inputs=[vgg19.input], outputs=[predictions])
     return model
 
 
-if __name__ == "__main__":
-
-    x_train, x_test, y_train, y_test, num_classes = build_train_test_set(dataset_path="../dataset/", test_set=0.2)
+def main(dataset_path, model_path=None, model_save=None):
+    x_train, x_test, y_train, y_test, num_classes, classes_dict = build_train_test_set(dataset_path=dataset_path, test_set=0.2)
 
     # convert label to categorical
     y_train = np_utils.to_categorical(y_train, num_classes=num_classes)
     y_test = np_utils.to_categorical(y_test, num_classes=num_classes)
 
-
-    #model = get_custom_VGG16(num_classes)
-    model = get_custom_VGG19(num_classes)
+    if model_path == None:
+        model = get_custom_VGG19(num_classes)
+    else:
+        model = load_model(model_path)
 
     # freeze the first 8 layers 
     for layer in model.layers[:8]:
         layer.trainable = False
 
-    opt = sgd = SGD(lr=0.0005, decay=1e-6, momentum=0.9, nesterov=True)
+    opt = SGD(lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
     model.compile(loss='categorical_crossentropy', 
                 optimizer=opt, 
                 metrics=['accuracy'])
 
+    if model_path == None:
+        history = model.fit(x_train, y_train,
+                    batch_size=16,
+                    epochs=1,
+                    validation_data=[x_test, y_test],
+                    shuffle=True)
 
-    history = model.fit(x_train, y_train,
-                batch_size=16,
-                epochs=20,
-                validation_data=[x_test, y_test],
-                shuffle=True)
+        # plot accuracy and loss
+        vizualization.plot_training_history_accuracy(history)
+        vizualization.plot_training_history_loss(history)
 
-    # save model
-    #model.save('results/vgg19finetuned.h5')
+        # save model
+        model.save(model_save)
+
+    y_pred = model.predict(x_test)
+    vizualization.plot_confusion_matrix(y_pred, y_test, classes_dict)
 
     # final evaluation
-    score = model.evaluate(x_test, y_test, verbose=0)
+    score = model.evaluate(x_test, y_test)
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])
 
-    # plot accuracy and loss
-    plot_training_history_accuracy(history)
-    plot_training_history_loss(history)
+
+if __name__ == "__main__":
+    import sys, argparse
+    argv = sys.argv[1:]
+
+    # when --help or no args are given
+    usage_text =  "Run as " + __file__ + " [options]"
+    parser = argparse.ArgumentParser(description=usage_text)
+
+    # create arguments
+    parser.add_argument(
+        "-d", "--dataset_path", dest="input", type=str, required=True,
+        help="Input folder for train and test data"
+    )
+
+    parser.add_argument(
+        "-m", "--model", dest="model", type=str, required=False,
+        help="Select existing model"
+    )
+
+    parser.add_argument(
+        "-s", "--save", dest="model_save", type=str, required=False,
+        default="results/model.h5",
+        help="Save model to..."
+    )
+
+    args = parser.parse_args(argv)
+ 
+    if not argv:
+        parser.print_help()
+        sys.exit(-1)
+    if not (args.input or args.background):
+        print("Error: Some required arguments missing")
+        parser.print_help()
+        sys.exit(-1)
+
+    main(args.input, args.model, args.model_save)
+
+
+
