@@ -2,7 +2,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import os
 
-def plot_confusion_matrix(pred, test, classes_dict):
+def plot_confusion_matrix(pred, test, classes):
     """
     Plots a confusion matrix and saves to file (.csv and .png).
     Saves the image to results/.
@@ -10,7 +10,7 @@ def plot_confusion_matrix(pred, test, classes_dict):
     Args:
         pred:   Output prediction vector
         test:   List of binary label vectors for each class e.g. [[0,0,1,..],[0,1,0,..], ...]
-        classes_dict: Dict for labels (k) and indexes (v)
+        classes: List of class labels
 
     Returns:
         None:   Simple writes results to file
@@ -28,15 +28,11 @@ def plot_confusion_matrix(pred, test, classes_dict):
 
     
     # convert class index to class label for confusion matrix
-    inv_classes_dict = {v: k for k, v in classes_dict.items()}
-    pred_classes = list(map(lambda i: inv_classes_dict[i], pred_classes))
-    test_classes = list(map(lambda i: inv_classes_dict[i], test_classes))
+    pred_classes = list(map(lambda i: classes[i], pred_classes))
+    test_classes = list(map(lambda i: classes[i], test_classes))
 
-    labels = list(classes_dict.keys())
-    print(labels)
-    
     # create the confusion matrix
-    cm = confusion_matrix(pred_classes, test_classes, labels=labels)
+    cm = confusion_matrix(pred_classes, test_classes, labels=classes)
     cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
     
 
@@ -53,8 +49,8 @@ def plot_confusion_matrix(pred, test, classes_dict):
             color="white" if cm[i, j] < thresh else "black")
 
     ax = fig.add_subplot(111)
-    ax.set_xticklabels([''] + labels, rotation=45)
-    ax.set_yticklabels([''] + labels)
+    ax.set_xticklabels([''] + classes, rotation=45)
+    ax.set_yticklabels([''] + classes)
     plt.imshow(cm, aspect='auto', cmap=plt.get_cmap("viridis"))
     ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
     ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
@@ -64,6 +60,28 @@ def plot_confusion_matrix(pred, test, classes_dict):
     # save result to file
     np.savetxt(os.path.join("results/", "confusion_matrix.csv"), cm, delimiter=",")
     plt.savefig(os.path.join("results/", "confusion_matrix.png"))
+
+def plot_dataset_distribution(part_category_csv):
+    """
+
+    :param part_category_csv:
+    :return:
+    """
+    import pandas as pd
+    df = pd.read_csv(part_category_csv)
+
+    plt.figure(figsize=(35, 5))
+
+    category = df.category
+    prob = category.value_counts()
+    threshold = 0.00
+    mask = prob > threshold
+    tail_prob = prob.loc[~mask].sum()
+    prob = prob.loc[mask]
+    prob['other'] = tail_prob
+    prob.plot(kind='bar')
+    plt.xticks(rotation=90)
+    plt.savefig("results/category_distribution.png")
 
 
 def plot_training_history_accuracy(history):
