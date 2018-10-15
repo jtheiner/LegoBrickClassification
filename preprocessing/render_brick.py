@@ -40,7 +40,9 @@ def render_brick(brick_file_path, background_file_path, number_of_images, render
     # brick selection
     for obj in bpy.data.objects:
         if (obj.name.endswith(".dat")):
+            print(obj.name)
             brick = obj
+            print(brick)
             break
 
     # render and image settings
@@ -82,9 +84,19 @@ def render_brick(brick_file_path, background_file_path, number_of_images, render
 
          # set color
         color = hex2rgb(random.choice(cfg["color"]))
-        print(color)
-        brick.active_material.diffuse_color = color
 
+        if brick.active_material != None:
+            brick.active_material.diffuse_color = color
+        else: # brick consists of more than one parts
+            # todo: nested objects
+            for obj in brick.children:
+                if len(obj.material_slots) == 0:
+                    bpy.context.scene.objects.active = obj
+                    bpy.ops.object.material_slot_add()
+                obj.material_slots[0].material = bpy.data.materials['Material']
+                obj.active_material.diffuse_color = color
+
+        print("color: {}".format(color))
         print("scale factor: {}".format(brick_scale_factor))
         print("position (x,y,z): {}, {}, {}".format(brick_posX, brick_posY, brick_posZ))
         print("rotation (x,y,z): {}, {}, {}".format(brick_rotX, brick_rotY, brick_rotZ))
@@ -166,8 +178,9 @@ if __name__ == '__main__':
         sys.exit(-1)
 
 
+
     # load config file for blender settings
-    with open('config.json', 'r') as f:
+    with open(os.path.join(os.path.dirname(__file__),'config.json'), 'r') as f:
         cfg = json.load(f)
 
     # finally render images
