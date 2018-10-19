@@ -30,7 +30,8 @@ Train a CNN to assign each brick its label dependend on the size of the category
 - [ ] Fix color change for nested 3d objects
 - [ ] (Re-)train different CNN architectures like VGG-19 and test performance for different settings (number of classes, images per class, training parameters). 
 - [ ] Optimize Transfer Learning approach
-- [ ] Train an AlexNet from scratch
+- [ ] Build a validation dataset of real world images (label part id and category manually)
+- [ ] Train an AlexNet from scratch with a limited number of classes
 
 
 [1]: https://jacquesmattheij.com/sorting-two-metric-tons-of-lego/
