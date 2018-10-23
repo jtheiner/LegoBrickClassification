@@ -4,7 +4,7 @@ import os
 
 def plot_confusion_matrix(pred, test, classes):
     """
-    Plots a confusion matrix and saves to file (.csv and .png).
+    Plots a confusion matrix and saves to file (.csv and .eps).
     Saves the image to results/.
 
     Args:
@@ -59,7 +59,7 @@ def plot_confusion_matrix(pred, test, classes):
 
     # save result to file
     np.savetxt(os.path.join("results/", "confusion_matrix.csv"), cm, delimiter=",")
-    plt.savefig(os.path.join("results/", "confusion_matrix.png"))
+    plt.savefig(os.path.join("results/", "confusion_matrix.eps"), format='eps')
 
 def plot_dataset_distribution(part_category_csv):
     """
@@ -81,7 +81,7 @@ def plot_dataset_distribution(part_category_csv):
     prob['other'] = tail_prob
     prob.plot(kind='bar')
     plt.xticks(rotation=90)
-    plt.savefig("results/category_distribution.png")
+    plt.savefig("results/category_distribution.eps", format='eps')
 
 
 def plot_training_history_accuracy(history):
@@ -101,7 +101,7 @@ def plot_training_history_accuracy(history):
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
     plt.legend(['train', 'validation'], loc='upper left')
-    plt.savefig(os.path.join("results/","training_process_acc.png"))
+    plt.savefig(os.path.join("results/","training_process_acc.eps"), format='eps')
 
 def plot_training_history_loss(history):
     """
@@ -120,4 +120,4 @@ def plot_training_history_loss(history):
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.legend(['train', 'validation'], loc='upper left')
-    plt.savefig(os.path.join("results/","training_process_loss.png"))
+    plt.savefig(os.path.join("results/","training_process_loss.eps"), format='eps')

@@ -1,50 +1,21 @@
+import matplotlib.pyplot as plt
 
-import os
-import csv
-
-
-def create_part_category_list(dat_directory):
-    """
-    Extract IDs, labels and categories from .dat files.
-    Stores content to csv file
-
-    :param dat_directory: path to .dat files
-    :return: list of rows [id, label, category]
-    """
-
-    # read parts directory containing all .dat files
-    files = []
-    for file in os.listdir(dat_directory):
-        if file.endswith(".dat"):
-            files.append(file)
-
-    parts = []
-    for filename in files:
-        part_number = filename[:-4]
-        with open(os.path.join(dat_directory, filename), 'r') as f:
-            first_line = f.readline()
-            if "~Moved to" in first_line:
-                continue
-            else:
-                label = first_line[2:-1] # skip zero and space
-                if '~' in label:
-                    label = label.replace('~', '')
-                if label.startswith('_'):
-                    label = label.replace('_', '')
-                if label.startswith('='):
-                    label = label.replace('=', '')
-                category = label.split(' ')[0]
-                parts.append([part_number, label, category])
+from preprocessing.create_dataset import create_part_category_list
 
 
-    with open('results/parts_category_list.csv', 'w') as csv_file:
-        writer = csv.writer(csv_file, delimiter=',')
-        writer.writerow(["id", "label", "category"])
-        for row in parts:
-            writer.writerow(row)
+df = create_part_category_list('res/parts_13463')
 
-    return parts
+print("number of parts in total")
+print(len(df.index))
 
+category_counts = df.category.value_counts()
+#category_counts = category_counts[category_counts]
+category_counts_sliced = category_counts.loc[category_counts > 10]
+print(category_counts_sliced)
 
-
-
+fig, ax = plt.subplots(figsize=(10,5))
+category_counts_sliced.plot.bar()
+fig.tight_layout(pad=2)
+ax.set_xlabel("category")
+ax.set_ylabel("number of parts")
+fig.savefig("results/category_counts.eps", format='eps')
