@@ -16,6 +16,7 @@ from classification import vizualization
 #from preprocessing.create_part_category_list import create_part_category_list
 
 
+
 def build_train_test_set(dataset_path, test_size=0.2, df=None, category_dict=None, category_thres=30):
     """
          Builds dataset and splits in train and test set.
@@ -48,14 +49,16 @@ def build_train_test_set(dataset_path, test_size=0.2, df=None, category_dict=Non
                         file_name_list.append(filepath)
 
     # build train and testset
-    xtotal = np.zeros((len(file_name_list),224,224,3), dtype=np.float16)
+
+    xtotal = []
     ytotal = []
-    for i, file_name in enumerate(file_name_list):
+    for file_name in file_name_list:
         # print(file_name)
-        #image = load_img(file_name, color_mode="grayscale", target_size=(224, 224)) # uncomment when using vgg
+        #image = load_img(file_name, grayscale=True, target_size=(224, 224)) # uncomment when using vgg
         image = load_img(file_name, target_size=(224, 224))
         image = img_to_array(image)
-        xtotal[i] = image
+        xtotal.append(image)
+
         splitted = file_name.split("/")
         label = splitted[len(splitted) - 2]
         if df != None:
@@ -77,14 +80,12 @@ def build_train_test_set(dataset_path, test_size=0.2, df=None, category_dict=Non
 
     # convert class labels to integer values
     ytotal = [classes.index(label) for label in ytotal]
-    print(xtotal.shape)
-    #xtotal = np.array(xtotal, dtype=np.float16)
-    ytotal = np.array(ytotal)
 
-    x_train, x_test, y_train, y_test = train_test_split(xtotal,
-                                                        ytotal,
+
+    x_train, x_test, y_train, y_test = train_test_split(np.array(xtotal),
+                                                        np.array(ytotal),
                                                         test_size=test_size,
-                                                        random_state=43,
+                                                        random_state=42,
                                                         shuffle=True)
 
     print("size of all train images: {} ".format(x_train.shape))
@@ -102,7 +103,8 @@ def main(dataset_path, variant, model_path=None, model_save=None):
         df = pd.read_csv("results/parts_category_list.csv")
         df = df.sort_values(['category', 'label'])
 
-        # create_part_category_list(dataset_path)
+
+
         vizualization.plot_dataset_distribution("results/parts_category_list.csv")
 
         print("category types: {}".format(df.category.unique()))
@@ -140,7 +142,7 @@ def main(dataset_path, variant, model_path=None, model_save=None):
     if model_path == None:
         history = model.fit(x_train, y_train,
                     batch_size=16,
-                    epochs=20,
+                    epochs=30,
                     validation_data=[x_test, y_test],
                     shuffle=True,
                     callbacks=[ModelCheckpoint("results/model.h5", save_best_only=True)]
