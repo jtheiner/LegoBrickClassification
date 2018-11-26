@@ -85,11 +85,12 @@ def generate_single_part_dataset(file_path, bg_images_path, dataset_out_path, im
 
     path_out = os.path.join(dataset_out_path, part_number) + "/"
 
+    """
     with open(file_path, 'r') as f:
         line = f.readline()
         if "~Moved to" in line:
             print("Part id moved to another one!")
-
+      """
     # create folder titled by part number
     if not os.path.exists(os.path.join(dataset_out_path + part_number)):
         os.makedirs(dataset_out_path + part_number)
@@ -214,7 +215,7 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "-n", "--images", dest="images_per_brick", type=int, required=False,
-        default=10,
+        default=100,
         help="Number of generated images per brick"
     )
 
