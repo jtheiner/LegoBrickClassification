@@ -62,8 +62,6 @@ def plot_confusion_matrix(pred, test, classes):
     plt.savefig(os.path.join("results/", "confusion_matrix.eps"), format='eps')
 
 def plot_dataset_distribution(part_category_csv):
-
-    # todo: replace by create_datasets function
     """
 
     :param part_category_csv:

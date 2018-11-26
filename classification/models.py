@@ -37,8 +37,8 @@ def get_custom_VGG19(num_classes):
     # fine tune a VGG19
     vgg19 = VGG19(weights='imagenet', include_top=True)
     # customize last layers
-    x = Dense(1024, activation='sigmoid', name='fc_1')(vgg19.layers[-4].output)
-    x = Dense(512, activation='sigmoid', name='fc_2')(x)
+    x = Dense(512, activation='sigmoid', name='fc_1')(vgg19.layers[-4].output)
+    x = Dense(256, activation='sigmoid', name='fc_2')(x)
     predictions = Dense(num_classes, activation='softmax', name='pred')(x)
     model = Model(inputs=[vgg19.input], outputs=[predictions])
 
