@@ -13,27 +13,18 @@ To generate images from a single 3d model we use the Blender script `render_bric
 
 # Classification
 
-### Transfer Learning
 For first tests, we use Transfer Learning with the aim to retrain existing network architectures like VGG19 trained on [ImageNet][3]. This allows a model creation with significantly reduced training data and time.
 We simply cut the last layer(s) and retrain with our classes. `train_model.py -d='image dataset directory'` builds the train and test set from the generated images and retrains the VGG19. Selected 45 partly similar classes and retrained on 100 instances per class, the accuracy is around 80%, but has the capability for improvement.
 
 ### Classes
-Due to the high number of bricks and limited hardware ressources of an sorting machine it is useful to assign bricks a category. These categories are extracted from the brick label of the 3d file.
-
-#### Variant 1
-Train a CNN to assign each brick a category. It is handy to group underrepresented categories.
-
-#### Variant 2
-Train a CNN to assign each brick its label dependend on the size of the category.
+Due to the high number of bricks and limited hardware ressources of an sorting machine it is useful to assign bricks a category. These categories are extracted from the brick label of the 3d file. In contrast, it is also necessary to classify each brick itself. The aim is to train one model that simultaneously learns the category and class mapping.
 
 
 ### Todo
 - [x] Dataset Generation: Find optimal parameters in `config.json` and use random brick colors
 - [ ] Fix color change for nested 3d objects
-- [ ] (Re-)train different CNN architectures like VGG-19 and test performance for different settings (number of classes, images per class, training parameters). 
-- [ ] Optimize Transfer Learning approach
 - [ ] Build a validation dataset of real world images (label part id and category manually)
-- [ ] Train an AlexNet from scratch with a limited number of classes
+- [ ] Train a ResNet model (classification layer contains all bricks and the category as well): ca. February 2019
 
 
 [1]: https://jacquesmattheij.com/sorting-two-metric-tons-of-lego/
