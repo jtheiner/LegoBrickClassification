@@ -1,6 +1,7 @@
 {
   "width" : 224,
   "height" : 224,
+  "jpeg_compression": 70,
   "zoom_min" : 0.3,
   "zoom_max" : 0.6,
   "pos_mean" : 0.0,

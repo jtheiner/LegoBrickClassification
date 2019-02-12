@@ -1,45 +1,65 @@
-import matplotlib.pyplot as plt
-
-from preprocessing.create_dataset import generate_single_part_dataset
-
-# todo: !
-
 import os
 import pandas as pd
-import numpy as np
-
-with open("res/top100.csv", 'r') as csv:
-    part_numbers = []
-    for i, line in enumerate(csv):
-        id = line.split(" ")[1]
-        id = id.replace("\t", "")
-
-        part_numbers.append(id)
-
-    with open('results/top100_parts.csv', 'w') as f:
-        for item in part_numbers:
-            f.write("%s\n" % item)
 
 
-#df = pd.read_csv("results/top100_parts.csv",sep='\t')
+def create_part_category_list(dat_directory):
+    """
+    Extract IDs, labels and categories from .dat files.
+    Stores content to csv file
+
+    :param dat_directory: path to .dat files
+    :return: pandas dataframe with columns [id, label, category]
+    """
 
 
-dat_directory = "res/parts_13463"
+    # read parts directory containing all .dat files
+    files = []
+    for file in os.listdir(dat_directory):
+        if file.endswith(".dat") and not file.startswith("."):
+            files.append(file)
 
-#parts = list(map(str, df.ix[:, 0].values.tolist()))
+    if len(files) == 0:
+        raise ValueError("No .dat files in this directory...")
+
+    parts = []
+    for i, filename in enumerate(files):
+        part_number = filename[:-4]
+        with open(os.path.join(dat_directory, filename), 'r', encoding="latin-1") as f:
+            first_line = f.readline()
+            # print(first_line)
+            if "~Moved to" in first_line:
+                continue
+            else:
+                label = first_line[2:-1]  # skip zero and space
+                if '~' in label:
+                    label = label.replace('~', '')
+                if label.startswith('_'):
+                    label = label.replace('_', '')
+                if label.startswith('='):
+                    label = label.replace('=', '')
+                category = label.split(' ')[0]
+                parts.append([part_number, label, category])
 
 
+    df = pd.DataFrame().from_records(parts, columns=["id", "label", "category"])
+    df.sort_values(by=["category", "label"], inplace=True)
+    df.reset_index(drop=True, inplace=True)
 
-parts = ["2357", "2412", "2420", "2431", "2540", "2654", "2780", "2877", "3001" , "3002"]
-files = []
-for file in os.listdir(dat_directory):
-    if file.endswith(".dat") and file[:-4] in parts:
-        files.append(file)
+    return df
 
-print(files)
-print(len(files))
 
-for file in files:
-    generate_single_part_dataset(os.path.join(dat_directory, file),
-                                 "res/bg_noise/",
-                                 "results/dataset_top10/", 200)
+if __name__ == "__main__":
+
+    # example usage
+
+    dat_directory = "../res/3d_files/complete/ldraw/parts"
+    results_directory = "results"
+
+    df = create_part_category_list(dat_directory)
+    print(df["category"].value_counts())
+    print(df.describe())
+
+    if not os.path.exists(results_directory):
+        os.makedirs(results_directory)
+
+    df.to_csv(os.path.join(results_directory, "parts_category_list.csv"), index=False, encoding="utf8")

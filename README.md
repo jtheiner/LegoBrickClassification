@@ -2,30 +2,61 @@
 This project is inspired by Jacques Mattheij's blog entry: [Sorting 2 Metric Tons of Lego][1] who uses a Deep Learning approach to sort Lego bricks. Our first goal is to improve the software side, especially creating a generic dataset for the neural network training.
 Due to the high number of bricks (10000+) and the related similarities, we plan a meaningful combination of categories and single bricks as classification task.
 
-# Dataset Generation
-To generate images from a single 3d model we use the Blender script `render_brick.py`. All 3d models come from a collection of [LDraw™][5] an open standard for LEGO CAD programs that allow the user to create virtual LEGO models. To improve the network training process we use rotation, scaling and translation of the brick and randomly insert a background image (indoor scene). For rotation all front perspectives are excluded in addition to a small range, e.g. 10 degree rotation in x direction is not permitted. For this reason, it is easier to identify the brick. A result is shown below. Established Blender with the [ImportLDraw][2] module you can run this script like: `blender -b -P render_brick.py -- -i='<path to .dat file>' -b='<path to background image>' -n=<number of images> -s='<output path>'`. To generate the full datasets execute `create_dataset.py` with specified parameters. By default, this script generates a dataset for the class "Brick" with 100 images for each class. In addition parts with a new part number and currently unnecessary categories like Minifig or Duplo will be ignored. The background images descended from a very small subset from [Indoor Scene Recognition Dataset][3].
+## Dataset Generation
+In order to generate images from a single 3d model we use Blender's Python interface and the [ImportLDraw][2] module. 
+All 3d models come from a collection of [LDraw™][5] an open standard for LEGO CAD programs that allow the user to create virtual LEGO models. 
+To improve the network training process we use rotation, scaling and translation of the brick and randomly insert a background image. 
+The background images are taken from a very small subset of the [Indoor Scene Recognition Dataset][3].
+For rotation all front perspectives are excluded in addition to a small range, e.g. 10 degree rotation in x direction
+ is not permitted.  For this reason, it is easier to identify the brick.
 
-<img src="/examples/rendered_brick_noise.jpg" width="224">
- 
-##### Parts distribution over all categories which include more than 10 individual parts:
-<img src="/examples/category_counts.svg">
+<img src="/results/readme_examples/example1.jpg" width="224">
+<img src="/results/readme_examples/example2.jpg" width="224">
+
+### Usage
+
+#### Single brick:
+Render one image for a single brick:
+```python
+python create_dataset.py -t="part" -i=<path to .dat file>
+```
+Alternatively, you can run the corresponding blender script itself using:
+```bash
+blender -b -P render_brick.py -- -i=<.dat file> -n=<number of images> -b=<background images path> -s=<output directory>
+```
+Note, on MacOs you can run blender with `/Applications/Blender/blender.app/Contents/MacOS/blender -b -P ...`
 
 
-# Classification
+#### Bricks for a given category:
+Generate images for one category. A subfolder with images is created for each brick in the category. File structure:`
+<output directory>/<category>/<part id>/<img id>.jpg` 
+```python
+python create_dataset.py -t="category" -i=<path to .dat files> -c=<category>
+```
 
-For first tests, we use Transfer Learning with the aim to retrain existing network architectures like VGG19 trained on [ImageNet][3]. This allows a model creation with significantly reduced training data and time.
-We simply cut the last layer(s) and retrain with our classes. `train_model.py -d='image dataset directory'` builds the train and test set from the generated images and retrains the VGG19. Selected 45 partly similar classes and retrained on 100 instances per class, the accuracy is around 80%, but has the capability for improvement.
+#### Bricks for all categories:
+Generate images for all bricks in the directory. Each brick is assigned to its respective category.
+```python
+python create_dataset.py -t="full" -i=<path to .dat files> 
+```
 
-### Classes
-Due to the high number of bricks and limited hardware ressources of an sorting machine it is useful to assign bricks a category. These categories are extracted from the brick label of the 3d file. In contrast, it is also necessary to classify each brick itself. The aim is to train one model that simultaneously learns the category and class mapping.
+
+### Parameters:
+
+ Argument | Optional  | Description |
+|-------------| :-----: | -------------|
+| -t  / --type | False    | Type for image generation: Choose "part", "category" or "full" |
+| -i  / --input | False    | Directory of .dat files or path to file if "part" is selected |
+| -b  / --background-images | True | Directory of images used as background. An image is randomly selected for each output image. |
+| -n  / --images      |   True | Number of images to render for each brick. Default: 1|
+| -c  / --category      |   True | Generate only images for a given category. Specify only if --type is "category" |
+| -o / --out_dataset | True | Output directory for generated images. By default, "./results/dataset/" is used.|
 
 
-### Todo
-- [x] Dataset Generation: Find optimal parameters in `config.json` and use random brick colors
-- [ ] Fix color change for nested 3d objects
-- [ ] Build a validation dataset of real world images (label part id and category manually)
-- [ ] Train a ResNet model (classification layer contains all bricks and the category as well): ca. February 2019
 
+### Parts Distribution 
+Parts distribution over all categories which include more than 10 individual parts from `ldraw/parts/` directory.
+<img src="/results/readme_examples/category_counts.svg">
 
 [1]: https://jacquesmattheij.com/sorting-two-metric-tons-of-lego/
 [2]: https://github.com/TobyLobster/ImportLDraw
