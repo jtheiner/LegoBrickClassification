@@ -10,8 +10,8 @@ The background images are taken from a very small subset of the [Indoor Scene Re
 For rotation all front perspectives are excluded in addition to a small range, e.g. 10 degree rotation in x direction
  is not permitted.  For this reason, it is easier to identify the brick.
 
-<img src="/results/readme_examples/example1.jpg" width="224">
-<img src="/results/readme_examples/example2.jpg" width="224">
+![](/results/readme_examples/example1.jpg)
+![](/results/readme_examples/example2.jpg)
 
 ### Usage
 
