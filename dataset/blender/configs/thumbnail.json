@@ -1,0 +1,140 @@
+{
+  "render": {
+    "width": 512,
+    "height": 512,
+    "resolution": 100,
+    "quality": 70,
+    "format": "JPEG",
+    "color_mode": "RGB"
+  },
+  "world": {
+    "background": {
+      "horizon_color": "FFFFFF",
+      "zenith_color": "FFFFFF",
+      "ambient_color": "000000",
+      "surface": {
+        "enabled": false,
+        "grayscale": true,
+        "lower_limit": 0.8,
+        "upper_limit": 1.0
+      }
+    },
+    "cam": {
+      "location": [
+        0,
+        -1.2,
+        1.2
+      ],
+      "rotation": [
+        45,
+        0,
+        0
+      ],
+      "augmentation": {
+        "enabled": false,
+        "theta_range": [0, 360],
+        "phi_range":[0, 90],
+        "radius": 2,
+        "step_size": 1000,
+        "n_points_circle": 1000,
+        "zlow": 0.3,
+        "zhigh": 9.98
+      }
+    },
+    "light": {
+      "random": false,
+      "type": "POINT",
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "radius": 10,
+      "energy": 1
+    }
+  },
+  "brick": {
+    "location": [
+      0,
+      0,
+      0
+    ],
+    "rotation": [
+      0,
+      0,
+      0
+    ],
+    "color": "111111",
+    "size_normalization": {
+      "enabled": true,
+      "target_dim": 1.0
+    },
+    "augmentation": {
+      "rotation": {
+        "enabled": false,
+        "xvalues": [
+          0, 90, 180, 270
+        ]
+      },
+      "zoom": {
+        "enabled": false,
+        "min": 0.5,
+        "max": 1.0
+      },
+      "translation": {
+        "enabled": false,
+        "min": -0.3,
+        "max": 0.3
+      },
+      "color": {
+        "enabled": false,
+        "colors": [
+          "1B2A34",
+          "1E5AA8",
+          "00852B",
+          "069D9F",
+          "B40000",
+          "D05098",
+          "D3359D",
+          "543324",
+          "8A928D",
+          "545955",
+          "97CBD9",
+          "58AB41",
+          "00AAA4",
+          "F06D61",
+          "F6A9BB",
+          "FAC80A",
+          "F4F4F4",
+          "ADD9A8",
+          "FFD67F",
+          "B0A06F",
+          "AFBED6",
+          "E5DFD3",
+          "671F81",
+          "0E3E9A",
+          "D67923",
+          "901F76",
+          "0A1327",
+          "6A7944",
+          "3E95B6",
+          "D4E5AB",
+          "F17880",
+          "564E9D",
+          "A47624",
+          "AC8247",
+          "D60026",
+          "945148",
+          "AD6140",
+          "56472F",
+          "FF9494"
+        ]
+      }
+    }
+  }
+}
