@@ -1,7 +1,7 @@
 # blender imports
 import bpy
 from mathutils import Euler, Vector
-
+from pathlib import Path
 # python imports
 import argparse
 import sys
@@ -30,7 +30,8 @@ def _init_world(cfg_bg, cfg_light, brick_file_path):
     world = bpy.data.worlds['World']
     
     # set world background
-    path ='../LegoBrickClassification/Background2.jpg'
+    path =os.path.join(os.path.dirname(__file__), 'Background2.JPG')
+    print(path)
     img = bpy.data.images.load(path)
     world.use_nodes = True
     nodes = world.node_tree.nodes
@@ -93,6 +94,7 @@ def _get_brick():
 def _render_settings(render_folder, render_cfg):
     os.makedirs(render_folder, exist_ok=True)
     bpy.context.scene.render.engine = 'CYCLES'
+    bpy.context.scene.cycles.device = 'GPU'
     render = bpy.data.scenes['Scene'].render
     render.resolution_x = render_cfg['width']
     render.resolution_y = render_cfg['height']
@@ -223,7 +225,7 @@ def _set_brick_color(colors, brick, random_color=False):
         color = (hex2rgb(random.choice(colors)))
         color = color+ (1,) # Add Alpha
         logging.debug('brick random color: {}'.format(color))
-    path ='../LegoBrickClassification/dust_dl.png'
+    path = os.path.join(os.path.dirname(__file__), 'dust_dl.png')
     mat = brick.active_material
     mat.use_nodes = True
     nodes = mat.node_tree.nodes

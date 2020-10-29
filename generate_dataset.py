@@ -8,6 +8,7 @@ import wget
 from pathlib import Path
 import zipfile
 import logging
+from datetime import datetime
 
 ldraw_fname = "complete.zip"
 dataset_files_base = './ldraw/parts/'
@@ -61,14 +62,22 @@ def _render(idx_fname, list_length: int, config_fname: str):
         print(e)
     finally:
         p.wait(timeout=30*number_of_images )
-    
+if __name__ == '__main__':   
 
-with Pool(processes=4) as p:
-    print(p)
-    _partial = partial(_render,
-                       list_length=len(dataset_files),
-                       config_fname=config_fname)
-    p.map(_partial, enumerate(dataset_files), chunksize=1)
+    with Pool(processes=1) as p:
+        print(p)
+        start = datetime.now()
+        _partial = partial(_render,
+                           list_length=len(dataset_files),
+                           config_fname=config_fname)
+        p.map(_partial, enumerate(dataset_files), chunksize=1)
+       # p.close()
+       # p.join()
+        print ("pool elapsed", datetime.now() - start)
+        
+     
+        
+       
 
 
 #_render((0, os.path.join(dataset_files_base, '2698c01.dat')), output_path, 1, config_fname, number_of_images=5)
