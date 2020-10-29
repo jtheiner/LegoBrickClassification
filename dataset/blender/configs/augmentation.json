@@ -1,7 +1,7 @@
 {
   "render": {
-    "width": 224,
-    "height": 224,
+    "width": 250,
+    "height": 250,
     "resolution": 100,
     "quality": 70,
     "format": "JPEG",
@@ -14,8 +14,8 @@
       "ambient_color": "000000",
       "surface": {
         "enabled": true,
-        "grayscale": true,
-        "lower_limit": 0.8,
+        "grayscale": false,
+        "lower_limit": 0.7,
         "upper_limit": 1.0
       }
     },
@@ -35,7 +35,7 @@
         "theta_range": [0, 360],
         "phi_range":[0, 90],
         "radius": 2,
-        "step_size": 1000,
+        "step_size": 100,
         "n_points_circle": 1000,
         "zlow": 0.3,
         "zhigh": 9.98
@@ -83,8 +83,8 @@
       },
       "zoom": {
         "enabled": true,
-        "min": 0.7,
-        "max": 1.5
+        "min": 2,
+        "max": 2.5
       },
       "translation": {
         "enabled": false,

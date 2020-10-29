@@ -19,26 +19,34 @@ from blender import sphere
 from blender.utils import hex2rgb, deg2rad, random_like_color
 
 
+
 def _init_world(cfg_bg, cfg_light, brick_file_path):
-    # remove all elements in scene
-    bpy.ops.object.select_by_layer()
-    bpy.ops.object.delete(use_global=False)
-
-    # create world
-    world = bpy.data.worlds.new("World")
-    world.use_sky_paper = True
-    bpy.context.scene.world = world
-
-    # set world background
-    world.use_sky_blend = True
-    world.horizon_color = hex2rgb(cfg_bg['horizon_color'])
-    world.zenith_color = hex2rgb(cfg_bg['zenith_color'])
-    world.ambient_color = hex2rgb(cfg_bg['ambient_color'])
 
     # load object from file
     bpy.ops.import_scene.importldraw(filepath=brick_file_path)
     bpy.data.objects.remove(bpy.data.objects['LegoGroundPlane'])
 
+    # create world
+    world = bpy.data.worlds['World']
+    
+    # set world background
+    path ='../LegoBrickClassification/Background2.jpg'
+    img = bpy.data.images.load(path)
+    world.use_nodes = True
+    nodes = world.node_tree.nodes
+    nodes.clear()
+    ShaderTexCo = nodes.new('ShaderNodeTexCoord')
+    ShaderTexImg = nodes.new('ShaderNodeTexEnvironment')
+    BSDF = nodes.new('ShaderNodeBackground')
+    Output = nodes.new('ShaderNodeOutputWorld')
+    img = bpy.data.images.load(path)
+    ShaderTexImg.image = img
+    links = world.node_tree.links
+    link = links.new(ShaderTexCo.outputs[1],ShaderTexImg.inputs[0])
+    link = links.new(ShaderTexImg.outputs[0],BSDF.inputs[0])
+    #link = links.new(ShaderTexImg.outputs[1],BSDF.inputs[1])
+    link = links.new(BSDF.outputs[0],Output.inputs[0])
+    
     # create camera
     bpy.ops.object.add(type='CAMERA')
     cam = bpy.context.object
@@ -48,16 +56,16 @@ def _init_world(cfg_bg, cfg_light, brick_file_path):
     cam.location = cfg['world']['cam']['location']
     cam.rotation_euler = Euler(deg2rad(cfg['world']['cam']['rotation']), 'XYZ')
 
-    bpy.ops.object.lamp_add(type='SUN',
+    bpy.ops.object.light_add(type='SUN',
                             radius=1,
-                            view_align=False,
+                            align='WORLD',
                             location=(0, 0, 3)
                             )
 
     # create light
-    bpy.ops.object.lamp_add(type=cfg_light['type'],
+    bpy.ops.object.light_add(type=cfg_light['type'],
                             radius=cfg_light['radius'],
-                            view_align=False,
+                            align='WORLD',
                             location=cfg_light['location'],
                             rotation=deg2rad(cfg_light['rotation']),
                             )
@@ -84,7 +92,7 @@ def _get_brick():
 
 def _render_settings(render_folder, render_cfg):
     os.makedirs(render_folder, exist_ok=True)
-    bpy.context.scene.render.engine = 'BLENDER_RENDER'
+    bpy.context.scene.render.engine = 'CYCLES'
     render = bpy.data.scenes['Scene'].render
     render.resolution_x = render_cfg['width']
     render.resolution_y = render_cfg['height']
@@ -92,42 +100,61 @@ def _render_settings(render_folder, render_cfg):
     bpy.context.scene.render.image_settings.file_format = render_cfg['format']
     bpy.context.scene.render.image_settings.color_mode = render_cfg['color_mode']
     bpy.context.scene.render.image_settings.quality = render_cfg['quality']  # compression in range [0, 100]
+    bpy.context.scene.cycles.samples = 100
+    bpy.context.scene.cycles.progressive = 'PATH'
+    bpy.context.scene.cycles.max_bounces = 12
+    bpy.context.scene.cycles.min_bounces = 0
+    bpy.context.scene.cycles.glossy_bounces = 20
+    bpy.context.scene.cycles.transmission_bounces = 12
+    bpy.context.scene.cycles.volume_bounces = 20
+    bpy.context.scene.cycles.transparent_max_bounces = 12
+    bpy.context.scene.cycles.transparent_min_bounces = 0
+    bpy.context.scene.cycles.use_progressive_refine = True
+    #bpy.context.scene.render_aa = 'ON' # V2.81
+    #bpy.context.scene.render.antialiasing_samples = '5' V2.81
     return render
 
 
 def _init_brick(brick, cfg_brick):
     brick.location = cfg_brick['location']
+    
     _set_brick_color([cfg_brick['color']], brick, random_color=True)
+    
+##    if len(brick.children) >= 1:  # brick with multiple parts
+##        logging.debug('brick with multiple objects: %s', brick.children)
+##        #scene = bpy.context.scene
+##        # join sub-elements to a new brick
+##        for obj in brick.children:
+##            logging.info(obj)
+##            #scene.collection.objects.link(obj)
+##            #obj.select_set(True) #obj.select = True
+##            #bpy.context.collection.objects.link(obj)  # bpy.context.scene.collection.objects.active(obj)
+##            #logging.info(obj.dimensions)
+##            
+##        #bpy.ops.object.collection_objects_select()
+##        logging.info(bpy.context.selected_objects)
+##        logging.debug(brick.dimensions)
+##        #bpy.ops.object.join()  # combine sub-elements
+##        
+        #bpy.ops.object.parent_clear(type='CLEAR')  # move group outside the parent
 
-    if len(brick.children) >= 1:  # brick with multiple parts
-        logging.debug('brick with multiple objects: %s', brick.children)
-        # join sub-elements to a new brick
-        for obj in brick.children:
-            obj.select = True
-            bpy.context.scene.objects.active = obj
-            # print(obj.dimensions)
-            # print(obj.type)
-
-        # print(bpy.context.selected_objects)
-        bpy.ops.object.join()  # combine sub-elements
-        bpy.ops.object.parent_clear(type='CLEAR')  # move group outside the parent
-
-        # remove old brick
-        bpy.data.objects.remove(bpy.data.objects[brick.name], True)
+        #remove old brick
+        #bpy.data.objects.remove(bpy.data.objects[brick.name], do_unlink = True)
+        
         # set the new brick
-        new = False
-        for obj in bpy.data.objects:
-            if obj.name == bpy.context.selected_objects[0].name:
-                new = True
-                logging.debug('object name: %s', obj.name)
-                brick = obj
-
-                logging.debug('new brick selected: %s', brick)
-        if not new:
-            e = 'new brick could not be selected'
-            logging.error(e)
-            raise ValueError(e)
-
+##        logging.info("Selected=",bpy.context.selected_objects[0].name)
+##        new = False
+##        for obj in bpy.data.objects:
+##            if obj.name == bpy.context.selected_objects[0].name:
+##                new = True
+##                logging.debug('object name: %s', obj.name)
+##                brick = obj
+##                logging.debug('new brick selected: %s', brick)
+##        if not new:
+##            e = 'new brick could not be selected'
+##            logging.error(e)
+##            raise ValueError(e)
+    
     # size normalization: set longest dimension to target size
     multiple_obj = False
     if cfg_brick['size_normalization']['enabled']:
@@ -144,22 +171,27 @@ def _init_brick(brick, cfg_brick):
             else:
                 scale_factor = dim_target / max(brick.dimensions)
                 brick.dimensions = brick.dimensions * scale_factor
+                logging.debug(scale_factor)
                 logging.debug(brick.dimensions)
                 brick.location = cfg_brick['location']
                 brick.rotation_euler = Euler(deg2rad(cfg_brick['rotation']))
+                logging.debug(brick.rotation_euler)
+                logging.debug(brick.scale)
+                logging.debug(brick.location)
         except Exception as e:
             logging.error(e)
             raise e
-
+    
     # set new origin to geometry center
     bpy.ops.object.select_all(action='DESELECT')
+
     for obj in bpy.context.scene.objects:
         if bpy.context.object.name == obj.name:
-            obj.select = True
+            obj.select_set(True)
             bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')  # set origin to center
             bpy.context.object.location = cfg_brick['location']
-            obj.select = False
-
+            obj.select_set(False)
+    
     # bpy.context.scene.update()
     if multiple_obj:
         brick = bpy.context.object
@@ -168,10 +200,10 @@ def _init_brick(brick, cfg_brick):
         bpy.ops.object.select_all(action='DESELECT')
         for obj in bpy.context.scene.objects:
             if brick.name == obj.name:
-                obj.select = True
+                obj.select_set(True)
                 bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')  # set origin to center
                 bpy.context.object.location = cfg_brick['location']
-                obj.select = False
+                obj.select_set(False)
     return brick
 
 
@@ -187,107 +219,97 @@ def check_blender():
 def _set_brick_color(colors, brick, random_color=False):
     color = hex2rgb(colors[0])
     if random_color:
-        color = hex2rgb(random.choice(colors))
+        
+        color = (hex2rgb(random.choice(colors)))
+        color = color+ (1,) # Add Alpha
         logging.debug('brick random color: {}'.format(color))
-
+    path ='../LegoBrickClassification/dust_dl.png'
+    mat = brick.active_material
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+    nodes.clear()
+    ShaderTexCo = nodes.new('ShaderNodeTexCoord')
+    ShaderTexCo.object = brick
+    ShaderTexImg = nodes.new('ShaderNodeTexImage')
+    BSDF = nodes.new('ShaderNodeBsdfPrincipled') #Split_RGB = nodes.new('ShaderNodeSeparateRGB')
+    Output = nodes.new('ShaderNodeOutputMaterial')
+    img = bpy.data.images.load(path)
+    ShaderTexImg.image = img
+    BSDF.inputs[0].default_value = color
+    links = mat.node_tree.links
+    link = links.new(ShaderTexCo.outputs[1],ShaderTexImg.inputs[0])
+    link = links.new(ShaderTexImg.outputs[0],BSDF.inputs[3])
+    link = links.new(ShaderTexImg.outputs[1],BSDF.inputs[18])
+    link = links.new(BSDF.outputs[0],Output.inputs[0])
+   
     if not brick.active_material and len(brick.children) == 0:
         logging.error(ValueError('Missing material!'))
     if brick.active_material:
+        logging.info("brick_active")
         brick.active_material.diffuse_color = color
-
+        
+        
+    
     else:  # brick consists of more than one parts/materials
         for obj in brick.children:
+            logging.info(obj)
             if len(obj.material_slots) == 0:
                 bpy.context.scene.objects.active = obj
                 bpy.ops.object.material_slot_add()
             if len(obj.material_slots) == 0:
                 logging.error(ValueError('no available material slot'))
-            obj.material_slots[0].material = bpy.data.materials['Material']
-            obj.active_material.diffuse_color = color
+                obj.active_material.diffuse_color = color
+               
+
+
+
 
 
 def random_background_surface(numx=20, numy=20, amp=0.2, scale=0.5, location=(0., 0., -0.4)):
+    i=0
     # create mesh and object
-    bpy.ops.surface.primitive_nurbs_surface_surface_add(location=(0, 0, 0))
-    surfpatch = bpy.data.objects['SurfPatch']
-    surfpatch.rotation_euler = (np.pi, 0, 0)
-    surfpatch.scale = (100, 100, 100)
-    surfpatch.location[2] = 91
-    material = bpy.data.materials.new('surfpatch color')
-    material.diffuse_color = (1, 1, 1)
-    surfpatch.data.materials.append(material)
+    #bpy.ops.surface.primitive_nurbs_surface_surface_add(location=(0, 0, 0))
+    #surfpatch = bpy.data.objects['SurfPatch']
+    #surfpatch.rotation_euler = (np.pi, 0, 0)
+    #surfpatch.scale = (100, 100, 100)
+    #surfpatch.location[2] = 89
+    #material = bpy.data.materials.new('surfpatch color')
+    #material.diffuse_color = (128, 128, 128,128) #V2.81  4d not 3d
+    #surfpatch.data.materials.append(material)
 
-    texture = bpy.data.textures.new('surfpatch texture', 'NOISE')
-    # texture.noise_scale = 10
-    # texture.noise_depth = 1
-
-    ts = material.texture_slots.add()
-    ts.texture = texture
-    bpy.data.materials['surfpatch color'].texture_slots[0].color = (0, 0, 0)
-    bpy.data.materials['surfpatch color'].texture_slots[0].diffuse_color_factor = 0.5
-
-    return surfpatch
-
-
-"""
-def random_background_surface_flat(numx=20, numy=20, amp=0.2, scale=0.5, location=(0., 0., -0.4)):
-    # source: http://wiki.theprovingground.org/blender-py-randmesh
-
-    verts = []
-    faces = []
-    for i in range(numx):
-        for j in range(numy):
-            x = scale * i
-            y = scale * j
-            z = random.random() * amp
-            vert = (x, y, z)
-            verts.append(vert)
-
-    count = 0
-    for i in range(numy * (numy - 1)):
-        if count < numy - 1:
-            A = i
-            B = i + 1
-            C = (i + numy) + 1
-            D = (i + numy)
-            face = (A, B, C, D)
-            faces.append(face)
-            count = count + 1
-        else:
-            count = 0
-
-    # create mesh and object
-    mymesh = bpy.data.meshes.new("random mesh")
-    myobject = bpy.data.objects.new("random mesh", mymesh)
-
-    # create mesh from python data
-    mymesh.from_pydata(verts, [], faces)
-    mymesh.update(calc_edges=True)
-
-    # subdivide modifier
-    myobject.modifiers.new("subd", type='SUBSURF')
-    myobject.modifiers['subd'].levels = 3
-    # show mesh as smooth
-    mypolys = mymesh.polygons
-    for p in mypolys:
-        p.use_smooth = True
-    bpy.context.scene.objects.link(myobject)
-
-    # set new origin to geometry center
-    bpy.ops.object.select_all(action='DESELECT')
-    for obj in bpy.context.scene.objects:
-        if obj.name == 'random mesh':
-            obj.select = True
-            bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')  # set origin to center
-            obj.select = False
-
-    myobject.location = location
-
-    material = bpy.data.materials.new('mesh color')
-    myobject.data.materials.append(material)
-    material.diffuse_color = (1, 1, 1)
-    return myobject
-"""
+    #texture = bpy.data.textures.new('surfpatch texture', 'NOISE')
+    #texture.noise_scale = 10
+    #texture.noise_depth = 1
+    #texture = bpy.data.textures.new('Bg',"IMAGE")
+##    path ='/Users/petesmac/Documents/Machine Learning/LegoBrickClassification/Background.jpg'
+##    img = bpy.data.images.load(path)
+##    #texture.image = img
+##    #ts = material.texture_slots.add()
+##    #ts.texture = texture
+##    #bpy.data.materials['surfpatch color'].texture_slots[0].color = (128,128,128,128)
+##    #bpy.data.materials['surfpatch color'].texture_slots[0].diffuse_color_factor = 0.8
+##    #mat = surfpatch.active_material
+##    mat = bpy.data.worlds.new("World")
+##    #mat = bpy.data.materials.exists(name="World")
+##    #mat.use_nodes = True
+##    nodes = mat.node_tree.nodes
+##    nodes.clear()
+##    #mat.diffuse_color = (0.5,0.5,0.5,0.8)
+##    ShaderTexCo = nodes.new('ShaderNodeTexCoord')
+##    #ShaderTexCo.object = surfpatch
+##    #Mapping = nodes.new('ShaderNodeMapping')
+##    ShaderTexImg = nodes.new('ShaderNodeTexImage')
+##    BSDF = nodes.new('ShaderNodeBackground')
+##    #Split_RGB = nodes.new('ShaderNodeSeparateRGB')
+##    Output = nodes.new('ShaderNodeOutputMaterial')
+##    img = bpy.data.images.load(path)
+##    ShaderTexImg.image = img
+##    links = mat.node_tree.links
+##    link = links.new(ShaderTexCo.outputs[1],ShaderTexImg.inputs[0])
+##    link = links.new(ShaderTexImg.outputs[0],BSDF.inputs[0])
+##    link = links.new(ShaderTexImg.outputs[1],BSDF.inputs[1])
+##    link = links.new(BSDF.outputs[0],Output.inputs[0])
+    
 
 
 def render_brick(brick_file_path, number_of_images, render_folder, cfg):
@@ -311,20 +333,20 @@ def render_brick(brick_file_path, number_of_images, render_folder, cfg):
         logging.debug('possible cam locations: {}'.format(len(sphere_locations)))
 
     render = _render_settings(render_folder, cfg['render'])
-
+    logging.info("render setup")
     # default location, rotation, color and size normalization
     brick = _init_brick(brick, cfg['brick'])
-
+    logging.info("init brick")
     # set camera view to center
     if cfg['world']['cam']['augmentation']['enabled']:
         constraint = cam.constraints.new('TRACK_TO')
         constraint.target = brick
         constraint.track_axis = 'TRACK_NEGATIVE_Z'
         constraint.up_axis = 'UP_Y'
-
+    logging.info("camer center")
     if cfg['world']['background']['surface']['enabled']:
-        bg = random_background_surface()
-
+        random_background_surface()
+    logging.debug("background set")
     base_scale = deepcopy(brick.scale)
     # create n images using several augmentation parameters
     logging.info('start rendering %s images', number_of_images)
@@ -346,7 +368,8 @@ def render_brick(brick_file_path, number_of_images, render_folder, cfg):
         if cfg['world']['background']['surface']['enabled']:
             sf = cfg['world']['background']['surface']
             c = random_like_color(grayscale=sf['grayscale'], lower_limit=sf['lower_limit'], upper_limit=sf['upper_limit'])
-            bg.data.materials['surfpatch color'].diffuse_color = c
+            logging.info("Color: {}".format(c))
+            #bg.data.materials['surfpatch color'].diffuse_color = c +(1,)
 
         augmentation = cfg['brick']['augmentation']
         if augmentation['rotation']['enabled']:
@@ -357,7 +380,11 @@ def render_brick(brick_file_path, number_of_images, render_folder, cfg):
 
         if augmentation['zoom']['enabled']:
             zoom_factor = random.uniform(augmentation['zoom']['min'], augmentation['zoom']['max'])
-            brick.scale = zoom_factor * base_scale
+            
+            #brick.scale = zoom_factor * base_scale
+            delta_location =cam.location- brick.location
+            logging.info(delta_location)
+            #exit(0)
             logging.debug('zoom factor: {}'.format(zoom_factor))
             logging.debug('brick scale {}'.format(brick.scale))
 
@@ -375,7 +402,7 @@ def render_brick(brick_file_path, number_of_images, render_folder, cfg):
         bpy.ops.render.render(write_still=True)
 
         # remove current background
-        world.texture_slots.clear(0)
+        #world.texture_slots.clear(0)
 
     return
 
@@ -454,8 +481,9 @@ if __name__ == '__main__':
         logging.basicConfig(level=level, filemode='w', format=format)
     logging.info('config file: %s', args.config)
     logging.getLogger().addHandler(logging.StreamHandler())
-
-    # try:
-    render_brick(args.input, args.number, args.save, cfg)
-    # except Exception as e:
-    #    logging.error(e)
+    try:
+        logging.info(args.input)
+        render_brick(args.input, args.number, args.save, cfg)
+    except Exception as e:
+        logging.info("Render error")
+        logging.error(e)

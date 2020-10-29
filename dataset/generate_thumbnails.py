@@ -5,7 +5,7 @@ import logging
 from functools import partial
 from multiprocessing.pool import Pool
 from typing import List, Tuple
-
+import sys
 import pandas as pd
 import numpy as np
 from skimage.measure import compare_ssim as ssim
@@ -68,12 +68,15 @@ def _create_thumbnail(idx_fname: Tuple, dataset_in_path: str, output_path: str, 
     render_script_path = os.path.join(os.path.dirname(__file__), 'blender', 'render.py')
     thumbnail_config = 'thumbnail.json'
     input_file_path = os.path.join(dataset_in_path, fname)
+    command_path =""
+    if sys.platform =='darwin':
+        command_path ="/Applications/Blender/blender.app/Contents/MacOS/" # required for OSX
     command = 'blender -b -P ' + render_script_path + ' --' \
               + ' -i ' + input_file_path \
               + ' -c ' + thumbnail_config \
               + ' -s ' + output_path
     try:
-        p = subprocess.Popen(command, shell=True, stdout=subprocess.DEVNULL)
+        p = subprocess.Popen(command_path+command, shell=True, stdout=subprocess.DEVNULL)
     except Exception as e:
         logging.error('stopped creating thumbnail for {}: {}'.format(fname, e))
     except subprocess.TimeoutExpired as e:
