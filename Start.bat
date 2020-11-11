@@ -1,0 +1,1 @@
+python C:\Users\test\MachineLearning\LegoBrickClassification\generate_dataset.py
