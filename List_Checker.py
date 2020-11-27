@@ -8,9 +8,9 @@ import pandas as pd
 
 
 
-dataset_path = '/Users/petesmac/Documents/Machine Learning/DATA/LEGO-brick-images/full_parts.csv'
+dataset_path = './DATA/LEGO-brick-images/Parts_Alt_2.csv'
 
-df = pd.read_csv(dataset_path, encoding='utf-8', index_col='part_num')
+df = pd.read_csv(dataset_path, encoding='utf-8', index_col='Part_num')
 
 dataset_files = [str(f)  for f in df.index]
 
