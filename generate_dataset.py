@@ -11,11 +11,12 @@ import zipfile
 import logging
 from datetime import datetime
 
+path = os.path.dirname(os.path.realpath(__file__))
 ldraw_fname = "complete.zip"
-dataset_files_base = './ldraw/parts/'
-dataset_path = './DATA/LEGO-brick-images/Parts_list.csv'
+dataset_files_base = os.path.join(path ,'ldraw','parts')
+dataset_path = os.path.join(path ,'DATA','LEGO-brick-images','Parts_list.csv')
 config_fname = 'augmentation.json'#'thumbnail.json'#'augmentation.json'
-output_path = './DATA/LEGO-brick-images/'
+output_path = os.path.join(path ,'DATA','LEGO-brick-images')
 url = "http://www.ldraw.org/library/updates/complete.zip"
 
 if (Path(dataset_files_base).is_dir() ==False):
@@ -43,8 +44,8 @@ def _render(idx_fname, list_length: int, config_fname: str):
         number_of_images = 1 #Always one images per variant
     if os.path.exists(os.path.join(output_dir_path)):
         part_id = os.path.splitext(os.path.basename(fname))[0]
-        num_images=len(glob.glob(os.path.join(output_path,part_id+'*.jpg')))
-        print("Part Id {} fname {} num_images {}".format(part_id, fname,number_of_images))
+        num_images=len(glob.glob(os.path.join(output_dir_path,part_id+'*.jpg')))
+        print("Directory exists Part Id {} fname {} num_images exist {} required {}".format(part_id, fname,num_images, number_of_images))
         if num_images >(number_of_images-1):
             print('{} ({}/{}): already exists'.format(fname, index + 1, list_length))
             return
@@ -66,6 +67,7 @@ def _render(idx_fname, list_length: int, config_fname: str):
               + ' -s ' + os.path.join(output_dir_path) \
               + ' -n ' + str(number_of_images)
     print(command)
+
     try:
         p = subprocess.Popen(command, shell=True, stdout=subprocess.DEVNULL)
     # except Exception as e:
