@@ -99,6 +99,21 @@ def _render_settings(render_folder, render_cfg):
     render.resolution_x = render_cfg['width']
     render.resolution_y = render_cfg['height']
     render.resolution_percentage = render_cfg['resolution']
+    bpy.context.scene.render.image_settings.file_format = render_cfg['format']	
+    bpy.context.scene.render.image_settings.color_mode = render_cfg['color_mode']	
+    bpy.context.scene.render.image_settings.quality = render_cfg['quality']  # compression in range [0, 100]	
+    bpy.context.scene.cycles.samples = 100	
+    bpy.context.scene.cycles.progressive = 'PATH'	
+    bpy.context.scene.cycles.max_bounces = 12	
+    bpy.context.scene.cycles.min_bounces = 0	
+    bpy.context.scene.cycles.glossy_bounces = 20	
+    bpy.context.scene.cycles.transmission_bounces = 12	
+    bpy.context.scene.cycles.volume_bounces = 20	
+    bpy.context.scene.cycles.transparent_max_bounces = 12	
+    bpy.context.scene.cycles.transparent_min_bounces = 0	
+    bpy.context.scene.cycles.use_progressive_refine = True	
+    #bpy.context.scene.render_aa = 'ON' # V2.81	
+    #bpy.context.scene.render.antialiasing_samples = '5' V2.81
     return render
 
 
@@ -219,13 +234,13 @@ def _set_brick_color(colors, brick, random_color=False):
                         (materials.append(mat) or materials) if mat not in materials else materials
                         logging.debug("Brick {} Child {} Grandchild {}Material{}".format(brick.name,obj.name,obj2.name,mat.name))
                         
-        if len(materials) != 0 and  random_color:
-            print(len(materials))
-            for mats in materials:
-                color = (hex2rgb(random.choice(colors)))
-                color = color+ (1,) # Add Alpha
-                logging.debug("{} Color {}".format(mats.name, color))
-                mats.node_tree.nodes["Group"].inputs[0].default_value = color
+    if len(materials) != 0 and  random_color:
+        print(len(materials))
+        for mats in materials:
+            color = (hex2rgb(random.choice(colors)))
+            color = color+ (1,) # Add Alpha
+            logging.debug("{} Color {}".format(mats.name, color))
+            mats.node_tree.nodes["Group"].inputs[0].default_value = color
                 
                 
 
