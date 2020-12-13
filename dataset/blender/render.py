@@ -99,21 +99,6 @@ def _render_settings(render_folder, render_cfg):
     render.resolution_x = render_cfg['width']
     render.resolution_y = render_cfg['height']
     render.resolution_percentage = render_cfg['resolution']
-    bpy.context.scene.render.image_settings.file_format = render_cfg['format']
-    bpy.context.scene.render.image_settings.color_mode = render_cfg['color_mode']
-    bpy.context.scene.render.image_settings.quality = render_cfg['quality']  # compression in range [0, 100]
-    bpy.context.scene.cycles.samples = 100
-    bpy.context.scene.cycles.progressive = 'PATH'
-    bpy.context.scene.cycles.max_bounces = 12
-    bpy.context.scene.cycles.min_bounces = 0
-    bpy.context.scene.cycles.glossy_bounces = 20
-    bpy.context.scene.cycles.transmission_bounces = 12
-    bpy.context.scene.cycles.volume_bounces = 20
-    bpy.context.scene.cycles.transparent_max_bounces = 12
-    bpy.context.scene.cycles.transparent_min_bounces = 0
-    bpy.context.scene.cycles.use_progressive_refine = True
-    #bpy.context.scene.render_aa = 'ON' # V2.81
-    #bpy.context.scene.render.antialiasing_samples = '5' V2.81
     return render
 
 
@@ -121,41 +106,6 @@ def _init_brick(brick, cfg_brick):
     brick.location = cfg_brick['location']
     
     _set_brick_color([cfg_brick['color']], brick, random_color=True)
-    
-##    if len(brick.children) >= 1:  # brick with multiple parts
-##        logging.debug('brick with multiple objects: %s', brick.children)
-##        #scene = bpy.context.scene
-##        # join sub-elements to a new brick
-##        for obj in brick.children:
-##            logging.info(obj)
-##            #scene.collection.objects.link(obj)
-##            #obj.select_set(True) #obj.select = True
-##            #bpy.context.collection.objects.link(obj)  # bpy.context.scene.collection.objects.active(obj)
-##            #logging.info(obj.dimensions)
-##            
-##        #bpy.ops.object.collection_objects_select()
-##        logging.info(bpy.context.selected_objects)
-##        logging.debug(brick.dimensions)
-##        #bpy.ops.object.join()  # combine sub-elements
-##        
-        #bpy.ops.object.parent_clear(type='CLEAR')  # move group outside the parent
-
-        #remove old brick
-        #bpy.data.objects.remove(bpy.data.objects[brick.name], do_unlink = True)
-        
-        # set the new brick
-##        logging.info("Selected=",bpy.context.selected_objects[0].name)
-##        new = False
-##        for obj in bpy.data.objects:
-##            if obj.name == bpy.context.selected_objects[0].name:
-##                new = True
-##                logging.debug('object name: %s', obj.name)
-##                brick = obj
-##                logging.debug('new brick selected: %s', brick)
-##        if not new:
-##            e = 'new brick could not be selected'
-##            logging.error(e)
-##            raise ValueError(e)
     
     # size normalization: set longest dimension to target size
     multiple_obj = False
@@ -165,10 +115,15 @@ def _init_brick(brick, cfg_brick):
             logging.debug(brick.dimensions)
             if brick.dimensions[0] == 0.0000:
                 logging.debug(bpy.context.object.dimensions)
-                scale_factor = dim_target / max(bpy.context.object.dimensions)
-                bpy.context.object.dimensions = bpy.context.object.dimensions * scale_factor
-                bpy.context.object.location = cfg_brick['location']
-                #bpy.context.object.rotation_euler = Euler(deg2rad(cfg_brick['rotation']))
+                #Calculate Max Dimension
+                max_dimensions =[]
+                for obj in bpy.context.scene.objects:
+                    max_dimensions.append(obj.dimensions)
+                
+                scale_factor = dim_target / max(max(max_dimensions))
+                brick.scale = brick.scale * scale_factor
+                brick.location = cfg_brick['location']
+                brick.rotation_euler = Euler(deg2rad(cfg_brick['rotation']))
                 multiple_obj = True
             else:
                 scale_factor = dim_target / max(brick.dimensions)
@@ -196,7 +151,7 @@ def _init_brick(brick, cfg_brick):
     
     # bpy.context.scene.update()
     if multiple_obj:
-        brick = bpy.context.object
+        #brick = bpy.context.object
         bpy.ops.object.select_all(action='DESELECT')
     else:
         bpy.ops.object.select_all(action='DESELECT')
@@ -220,97 +175,66 @@ def check_blender():
 
 def _set_brick_color(colors, brick, random_color=False):
     color = hex2rgb(colors[0])
+    materials =[]
     if random_color:
-        
         color = (hex2rgb(random.choice(colors)))
         color = color+ (1,) # Add Alpha
         logging.debug('brick random color: {}'.format(color))
-    path = os.path.join(os.path.dirname(__file__), 'dust_dl.png')
-    mat = brick.active_material
-    mat.use_nodes = True
-    nodes = mat.node_tree.nodes
-    nodes.clear()
-    ShaderTexCo = nodes.new('ShaderNodeTexCoord')
-    ShaderTexCo.object = brick
-    ShaderTexImg = nodes.new('ShaderNodeTexImage')
-    BSDF = nodes.new('ShaderNodeBsdfPrincipled') #Split_RGB = nodes.new('ShaderNodeSeparateRGB')
-    Output = nodes.new('ShaderNodeOutputMaterial')
-    img = bpy.data.images.load(path)
-    ShaderTexImg.image = img
-    BSDF.inputs[0].default_value = color
-    links = mat.node_tree.links
-    link = links.new(ShaderTexCo.outputs[1],ShaderTexImg.inputs[0])
-    link = links.new(ShaderTexImg.outputs[0],BSDF.inputs[3])
-    link = links.new(ShaderTexImg.outputs[1],BSDF.inputs[18])
-    link = links.new(BSDF.outputs[0],Output.inputs[0])
    
     if not brick.active_material and len(brick.children) == 0:
         logging.error(ValueError('Missing material!'))
     if brick.active_material:
-        logging.info("brick_active")
-        brick.active_material.diffuse_color = color
-        
-        
-    
+        logging.debug("brick_active")
+        mat = brick.active_material
+        (materials.append(mat) or materials) if mat not in materials else materials
+        #mat.node_tree.nodes["Group"].inputs[0].default_value = color
+        logging.debug("Brick {} Material{}".format(brick.name,mat.name))
+        #brick..diffuse_color = color
     else:  # brick consists of more than one parts/materials
         for obj in brick.children:
             logging.info(obj)
-            if len(obj.material_slots) == 0:
-                bpy.context.scene.objects.active = obj
-                bpy.ops.object.material_slot_add()
-            if len(obj.material_slots) == 0:
-                logging.error(ValueError('no available material slot'))
-                obj.active_material.diffuse_color = color
-               
-
+            if len(obj.children) == 0:
+                if len(obj.material_slots) == 0:
+                    bpy.context.scene.objects.active = obj
+                    bpy.ops.object.material_slot_add()
+                if len(obj.material_slots) == 0 and len(obj.children) == 0:
+                    logging.error(ValueError('no available material slot'))
+                else:
+                    #obj.active_material.diffuse_color = color
+                    mat = obj.active_material
+                    (materials.append(mat) or materials) if mat not in materials else materials
+                    logging.debug("Brick {} Child {} Material{}".format(brick.name,obj.name,mat.name))
+                    #mat.node_tree.nodes["Group"].inputs[0].default_value = color
+            else: # child consists of more than one parts/materials
+                for obj2 in obj.children:
+                    logging.info("Brick {} Child {} Grandchild {}".format(brick.name,obj.name,obj2.name))
+                    if len(obj2.material_slots) == 0:
+                        bpy.context.scene.objects.active = obj2
+                        bpy.ops.object.material_slot_add()
+                    if len(obj2.material_slots) == 0 and len(obj2.children) == 0:
+                        logging.error(ValueError('no available material slot'))
+                        #obj.active_material.diffuse_color = color
+                    else:
+                        mat = obj2.active_material
+                        (materials.append(mat) or materials) if mat not in materials else materials
+                        logging.debug("Brick {} Child {} Grandchild {}Material{}".format(brick.name,obj.name,obj2.name,mat.name))
+                        
+        if len(materials) != 0 and  random_color:
+            print(len(materials))
+            for mats in materials:
+                color = (hex2rgb(random.choice(colors)))
+                color = color+ (1,) # Add Alpha
+                logging.debug("{} Color {}".format(mats.name, color))
+                mats.node_tree.nodes["Group"].inputs[0].default_value = color
+                
+                
 
 
 
 
 def random_background_surface(numx=20, numy=20, amp=0.2, scale=0.5, location=(0., 0., -0.4)):
     i=0
-    # create mesh and object
-    #bpy.ops.surface.primitive_nurbs_surface_surface_add(location=(0, 0, 0))
-    #surfpatch = bpy.data.objects['SurfPatch']
-    #surfpatch.rotation_euler = (np.pi, 0, 0)
-    #surfpatch.scale = (100, 100, 100)
-    #surfpatch.location[2] = 89
-    #material = bpy.data.materials.new('surfpatch color')
-    #material.diffuse_color = (128, 128, 128,128) #V2.81  4d not 3d
-    #surfpatch.data.materials.append(material)
 
-    #texture = bpy.data.textures.new('surfpatch texture', 'NOISE')
-    #texture.noise_scale = 10
-    #texture.noise_depth = 1
-    #texture = bpy.data.textures.new('Bg',"IMAGE")
-##    path ='/Users/petesmac/Documents/Machine Learning/LegoBrickClassification/Background.jpg'
-##    img = bpy.data.images.load(path)
-##    #texture.image = img
-##    #ts = material.texture_slots.add()
-##    #ts.texture = texture
-##    #bpy.data.materials['surfpatch color'].texture_slots[0].color = (128,128,128,128)
-##    #bpy.data.materials['surfpatch color'].texture_slots[0].diffuse_color_factor = 0.8
-##    #mat = surfpatch.active_material
-##    mat = bpy.data.worlds.new("World")
-##    #mat = bpy.data.materials.exists(name="World")
-##    #mat.use_nodes = True
-##    nodes = mat.node_tree.nodes
-##    nodes.clear()
-##    #mat.diffuse_color = (0.5,0.5,0.5,0.8)
-##    ShaderTexCo = nodes.new('ShaderNodeTexCoord')
-##    #ShaderTexCo.object = surfpatch
-##    #Mapping = nodes.new('ShaderNodeMapping')
-##    ShaderTexImg = nodes.new('ShaderNodeTexImage')
-##    BSDF = nodes.new('ShaderNodeBackground')
-##    #Split_RGB = nodes.new('ShaderNodeSeparateRGB')
-##    Output = nodes.new('ShaderNodeOutputMaterial')
-##    img = bpy.data.images.load(path)
-##    ShaderTexImg.image = img
-##    links = mat.node_tree.links
-##    link = links.new(ShaderTexCo.outputs[1],ShaderTexImg.inputs[0])
-##    link = links.new(ShaderTexImg.outputs[0],BSDF.inputs[0])
-##    link = links.new(ShaderTexImg.outputs[1],BSDF.inputs[1])
-##    link = links.new(BSDF.outputs[0],Output.inputs[0])
     
 
 
