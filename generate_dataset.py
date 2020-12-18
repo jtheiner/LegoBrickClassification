@@ -27,11 +27,10 @@ if (Path(dataset_files_base).is_dir() ==False):
 number_of_images = 50
 
 
-df = pd.read_csv(dataset_path, encoding='utf-8', index_col=0)
-dataset_files = [(os.path.join(dataset_files_base, str(df.loc[f]['Part_num']) + '.dat'), os.path.join(output_path, str(df.loc[f]['Directory'])), number_of_images //df.loc[f] ['Num_var']) for f in df.index]
+df = pd.read_csv(dataset_path, encoding='utf-8',dtype =  {1:'object'}, index_col= 0)
 
-#dataset_files = dataset_files[1858:1900]
-#print(dataset_files)
+dataset_files = [(os.path.join(dataset_files_base, str(df.loc[f]['Part_num']) + '.dat'), os.path.join(output_path, str(df.loc[f]['Directory'])), number_of_images //df.loc[f] ['Num_var']) for f in df.index]
+#dataset_files = dataset_files[0:100]
 
 # todo: load background images in memory before rendering process begins, possible in blender?
 # alternative: remove already used "background material" in blender
@@ -65,9 +64,10 @@ def _render(idx_fname, list_length: int, config_fname: str):
               + ' -i ' + fname \
               + ' -c ' + config_fname \
               + ' -s ' + os.path.join(output_dir_path) \
-              + ' -n ' + str(number_of_images)
+              + ' -n ' + str(number_of_images) \
+              + ' -v'
     print(command)
-
+    
     try:
         p = subprocess.Popen(command, shell=True, stdout=subprocess.DEVNULL)
     # except Exception as e:
