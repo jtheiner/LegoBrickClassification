@@ -1,0 +1,16 @@
+id,label,category,thumbnail_rendered,identical,shape_identical_count,shape_identical
+2454,Brick  1 x  2 x  5,Brick,True,2454,8,2454 2456 3007 3008 3009 48147 6066 6213
+2456,Brick  2 x  6,Brick,True,2456,6,2454 2456 3007 3008 3009 6213
+2462,Brick  3 x  3 Facet,Brick,True,2462,1,2462
+3001,Brick  2 x  4,Brick,True,3001,1,3001
+3002,Brick  2 x  3,Brick,True,3002,1,3002
+3003,Brick  2 x  2,Brick,True,3003,1,3003
+3007,Brick  2 x  8,Brick,True,3007,8,2454 2456 3007 3008 3009 48147 6066 6213
+3008,Brick  1 x  8,Brick,True,3008,8,2454 2456 3007 3008 3009 48147 6066 6213
+3009,Brick  1 x  6,Brick,True,3009,8,2454 2456 3007 3008 3009 48147 6066 6213
+3010,Brick  1 x  4,Brick,True,3010,1,3010
+6066,Brick  4 x  8 x  2.333 Turret Top,Brick,True,6066,7,2454 3007 3008 3009 48147 6066 6213
+6143,Brick  2 x  2 Round Type 2,Brick,True,6143,1,6143
+6213,Brick  2 x  6 x  3,Brick,True,6213,8,2454 2456 3007 3008 3009 48147 6066 6213
+30145,Brick  2 x  2 x  3,Brick,True,30145,1,30145
+48147,Brick  4 x  8 Round Half Circle with Two Pins,Brick,True,48147,7,2454 3007 3008 3009 48147 6066 6213
